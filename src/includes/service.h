@@ -55,12 +55,23 @@
  * When required_by transitions to 0, the service is stopped (unless it is pinned). When
  * require_by transitions from 0, the service is started (unless pinned).
  *
- * So, in general, the dependent-count determines the desired state (STARTED if the count
- * is greater than 0, otherwise STOPPED). However, a service can be issued a stop-and-take
- * down order (via `stop(true)'); this will first stop dependent services, which may restart
- * and cancel the stop of the former service. Finally, a service can be force-stopped, which
- * means that its stop process cannot be cancelled (though it may still be put in a desired
- * state of STARTED, meaning it will start immediately upon stopping).
+ * In general, the dependent-count determines the desired state (STARTED if the count
+ * is greater than 0, otherwise STOPPED). Explicit activation counts effectively
+ * increments the count and sets the desired state as STARTED.
+ *
+ * When a service stops, any soft dependency links to its dependents must be broken, or otherwise
+ * the desired state will remain as STARTED and the service will always restart. If the
+ * auto-restart option is enabled for the service, or if the service is explicitly being restarted
+ * (restart == true), this is actually the desired behaviour, and so in these cases the dependency
+ * links are not broken.
+ *
+ * Force stop
+ * ----------
+ * A service can be issued a stop-and-take down order (via `stop(true)'); this will first stop
+ * dependent services, which may restart and cancel the stop of the former service. Finally, a
+ * service can be force-stopped, which means that its stop process cannot be cancelled (though
+ * it may still be put in a desired state of STARTED, meaning it will start immediately upon
+ * stopping).
  *
  * Pinning
  * -------
@@ -73,13 +84,14 @@
  *  - force stop flag
  *  - desired state (which is manipulated by require/release operations)
  *
- * So a forced stop cannot occur until the service is not pinned started, for instance.
+ * So a forced stop cannot occur until the service is not pinned started, for instance. (if
+ * pinned, the forced stop remains pending until the pin is released).
  *
  * Two-phase transition
  * --------------------
  * Transition between states occurs in two phases: propagation and execution. In both phases
  * a linked-list queue is used to keep track of which services need processing; this avoids
- * recursion (which would be of unknown depth and therefore liable to stack overflow).
+ * recursion (which would be of unknown depth and therefore liable to cause stack overflow).
  *
  * In the propagation phase, acquisition/release messages are processed, and desired state may be
  * altered accordingly. Start and stop requests are also propagated in this phase. The state may

@@ -53,7 +53,7 @@ void service_record::stopped() noexcept
     // If we are to re-start, restarting should have been set true and desired_state should be STARTED.
     // (A restart could be cancelled via a separately issued stop, including via a shutdown).
     bool will_restart = desired_state == service_state_t::STARTED && !pinned_stopped;
-    restarting = false;
+    //restarting = false; // XXX should this be here?
 
     // If we won't restart, break soft dependencies now
     if (! will_restart) {
@@ -83,7 +83,7 @@ void service_record::stopped() noexcept
 
     if (will_restart) {
         // Desired state is "started".
-        restarting = true;
+        restarting = true; // XXX get rid of this
         initiate_start();
     }
     else {
@@ -155,6 +155,7 @@ void service_record::release(bool issue_stop) noexcept
             }
         }
         desired_state = service_state_t::STOPPED;
+        //restarting = false;
 
         if (pinned_started) return;
 
@@ -285,7 +286,7 @@ void service_record::do_start() noexcept
         }
 
         if (! can_interrupt_stop()) {
-            restarting = true;
+            //restarting = true;
             return;
         }
 
@@ -361,7 +362,7 @@ void service_record::all_deps_started() noexcept
     }
 
     bool start_success = bring_up();
-    restarting = false;
+    //restarting = false;
     if (start_success) {
         // re-attach any soft dependents, now that we have started again
         for (auto dept : dependents) {
@@ -576,7 +577,7 @@ void service_record::do_stop(bool with_restart) noexcept
 
     bool all_deps_stopped = stop_dependents(for_restart);
 
-    restarting = false;
+    //restarting = false;
 
     if (service_state != service_state_t::STARTED) {
         if (service_state == service_state_t::STARTING) {

@@ -1,3 +1,8 @@
+- restarting is set if restarting for any reason, but base_process_service will
+  limit restarts even if not caused by failure
+- we don't set a start timeout for process services, but we should if they have a notify
+  mechanism set
+
 For version 0.9.1
 -----------------
 * [DONE] update docs re pinning
